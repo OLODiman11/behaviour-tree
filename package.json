@@ -1,0 +1,8 @@
+{
+  "name": "com.olodiman11.behaviour-tree",
+  "displayName": "Behaviour Tree",
+  "version": "1.0.0",
+  "unity": "2020.3.29f1",
+  "description": "Behaviour Tree for AIs",
+  "category": "AI"
+}
