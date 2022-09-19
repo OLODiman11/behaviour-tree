@@ -95,160 +95,68 @@ namespace BehaviourTreeTests.Composites
             
                 sequenceState.Should().Be(state);
             }
+            
+            [TestCase(Failure, TestName = "OnFailure")]
+            [TestCase(Success, TestName = "OnSuccess")]
+            public void StartsOver(NodeState state)
+            {
+                var children = new List<Node>()
+                    .With(NewFailureNode)
+                    .With(NewConstantStateNode(state));
+                var selector = Fixture.CreateComposite<Selector>(children);
+
+                selector.Evaluate();
+                selector.Evaluate();
+
+                foreach (var child in children) child.Received(2).Evaluate();
+            }
         }
         
         [TestFixture]
-        public class AbortTypeProperty
+        public class ReevaluateEveryFrame
         {
             private Node _higherPriority;
             private Node _lowerPriority;
-            
+
             [SetUp]
             public void SetUp()
             {
                 _lowerPriority = NewRunningNode;
                 _higherPriority = NewFailureNode;
             }
-                
-            [TestFixture]
-            public class None : AbortTypeProperty
+
+            [TestCase(Running)]
+            [TestCase(Success)]
+            public void DoesNotReevaluateEvaluatedChildrenIfFalse(NodeState state)
             {
-                [Test]
-                public void DoesNotSwitchToHigherPriorityChild()
-                {
-                    var sequence = Fixture.CreateComposite<Selector>(AbortType.None, new List<Node>()
-                        .With(_higherPriority)
-                        .With(_lowerPriority));
-            
-                    sequence.Evaluate();
-                    _higherPriority.Evaluate().Returns(Running);
-                    sequence.Evaluate();
-            
-                    _lowerPriority.Received(2).Evaluate();
-                    _higherPriority.Received(1).Evaluate();
-                }
-            
-                [Test]
-                public void DoesNotSwitchToItself()
-                {
-                    var sutSequence = Fixture.CreateComposite<Selector>(AbortType.None, new List<Node>().With(_higherPriority));
-                    var rootSequence = Fixture.CreateComposite<Selector>(new List<Node>()
-                        .With(sutSequence)
-                        .With(_lowerPriority));
-            
-                    rootSequence.Evaluate();
-                    _higherPriority.Evaluate().Returns(Running);
-                    rootSequence.Evaluate();
-            
-                    _lowerPriority.Received(2).Evaluate();
-                    _higherPriority.Received(1).Evaluate();
-                }
+                var deltaTime = 1.5f;
+                var selector = Fixture.CreateComposite<Selector>(false, new List<Node>()
+                    .With(_higherPriority)
+                    .With(_lowerPriority));
+
+                selector.Evaluate(deltaTime);
+                _higherPriority.Evaluate(Arg.Any<float>()).Returns(state);
+                selector.Evaluate(deltaTime);
+
+                _lowerPriority.Received(2).Evaluate(deltaTime);
+                _higherPriority.Received(1).Evaluate(deltaTime);
             }
-            
-            [TestFixture]
-            public class Self : AbortTypeProperty
+
+            [TestCase(Running)]
+            [TestCase(Success)]
+            public void ReevaluatesEvaluatedChildrenIfTrue(NodeState state)
             {
-                [Test]
-                public void SwitchesToHigherPriorityChild()
-                {
-                    var sequence = Fixture.CreateComposite<Selector>(AbortType.Self, new List<Node>()
-                        .With(_higherPriority)
-                        .With(_lowerPriority));
-            
-                    sequence.Evaluate();
-                    _higherPriority.Evaluate().Returns(Running);
-                    sequence.Evaluate();
-            
-                    _lowerPriority.Received(1).Evaluate();
-                    _higherPriority.Received(2).Evaluate();
-                }
-            
-                [Test]
-                public void DoesNotSwitchToItself()
-                {
-                    var sutSequence = Fixture.CreateComposite<Selector>(AbortType.Self, new List<Node>().With(_higherPriority));
-                    var rootSequence = Fixture.CreateComposite<Selector>(new List<Node>()
-                        .With(sutSequence)
-                        .With(_lowerPriority));
-            
-                    rootSequence.Evaluate();
-                    _higherPriority.Evaluate().Returns(Running);
-                    rootSequence.Evaluate();
-            
-                    _lowerPriority.Received(2).Evaluate();
-                    _higherPriority.Received(1).Evaluate();
-                }
-            }
-            
-            [TestFixture]
-            public class LowerPriority : AbortTypeProperty
-            {
-                [Test]
-                public void DoesNotSwitchToHigherPriorityChild()
-                {
-                    var sequence = Fixture.CreateComposite<Selector>(AbortType.LowerPriority, new List<Node>()
-                        .With(_higherPriority)
-                        .With(_lowerPriority));
-            
-                    sequence.Evaluate();
-                    _higherPriority.Evaluate().Returns(Running);
-                    sequence.Evaluate();
-            
-                    _lowerPriority.Received(2).Evaluate();
-                    _higherPriority.Received(1).Evaluate();
-                }
-            
-                [Test]
-                public void SwitchesToItself()
-                {
-                    var sutSequence =
-                        Fixture.CreateComposite<Selector>(AbortType.LowerPriority, new List<Node>().With(_higherPriority));
-                    var rootSequence = Fixture.CreateComposite<Selector>(new List<Node>()
-                        .With(sutSequence)
-                        .With(_lowerPriority));
-            
-                    rootSequence.Evaluate();
-                    _higherPriority.Evaluate().Returns(Running);
-                    rootSequence.Evaluate();
-            
-                    _lowerPriority.Received(1).Evaluate();
-                    _higherPriority.Received(2).Evaluate();
-                }
-            }
-            
-            [TestFixture]
-            public class Both : AbortTypeProperty
-            {
-                [Test]
-                public void SwitchesToHigherPriorityChild()
-                {
-                    var sequence = Fixture.CreateComposite<Selector>(AbortType.Both, new List<Node>()
-                        .With(_higherPriority)
-                        .With(_lowerPriority));
-            
-                    sequence.Evaluate();
-                    _higherPriority.Evaluate().Returns(Running);
-                    sequence.Evaluate();
-            
-                    _lowerPriority.Received(1).Evaluate();
-                    _higherPriority.Received(2).Evaluate();
-                }
-            
-                [Test]
-                public void SwitchesToItself()
-                {
-                    var sutSequence = Fixture.CreateComposite<Selector>(AbortType.Both, new List<Node>().With(_higherPriority));
-                    var rootSequence = Fixture.CreateComposite<Selector>(new List<Node>()
-                        .With(sutSequence)
-                        .With(_lowerPriority));
-            
-                    rootSequence.Evaluate();
-                    _higherPriority.Evaluate().Returns(Running);
-                    rootSequence.Evaluate();
-            
-                    _lowerPriority.Received(1).Evaluate();
-                    _higherPriority.Received(2).Evaluate();
-                }
+                var deltaTime = 1.5f;
+                var selector = Fixture.CreateComposite<Selector>(true, new List<Node>()
+                    .With(_higherPriority)
+                    .With(_lowerPriority));
+
+                selector.Evaluate(deltaTime);
+                _higherPriority.Evaluate(Arg.Any<float>()).Returns(state);
+                selector.Evaluate(deltaTime);
+
+                _lowerPriority.Received(1).Evaluate(deltaTime);
+                _higherPriority.Received(2).Evaluate(deltaTime);
             }
         }
     }

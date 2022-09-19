@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using AutoFixture;
 using AutoFixture.AutoNSubstitute;
-using AutoFixture.Kernel;
 using BehaviourTree;
 using BehaviourTree.Composites;
 using static BehaviourTree.NodeState;
@@ -24,10 +23,7 @@ namespace BehaviourTreeTests.Utils
             get
             {
                 var fixture = new Fixture(new GreedyEngineParts());
-                fixture.Register(() => AbortType.None);
                 fixture.Customize(new AutoNSubstituteCustomization());
-                // fixture.Customize<Composite>(c 
-                //     => c.FromFactory(new MethodInvoker(new GreedyConstructorQuery())));
                 return fixture;
             }
         }
@@ -43,9 +39,6 @@ namespace BehaviourTreeTests.Utils
 
             return list;
         }
-
-        public static T New<T>(AbortType abortType, params Node[] children) where T : Composite 
-            => Fixture.CreateComposite<T>(abortType, children.ToList());
 
         public static T New<T>() => Fixture.Create<T>();
 
