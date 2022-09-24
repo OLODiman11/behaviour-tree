@@ -1,4 +1,7 @@
-﻿namespace BehaviourTree
+﻿using System;
+using System.Runtime.Remoting.Messaging;
+
+namespace BehaviourTree
 {
     public abstract class Node
     {

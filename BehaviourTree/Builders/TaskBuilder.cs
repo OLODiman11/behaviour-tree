@@ -4,7 +4,7 @@ using BehaviourTree.Tasks;
 
 namespace BehaviourTree.Builders
 {
-    public class TaskBuilder<T> : NodeBuilder where T : Task
+    public class TaskBuilder<T> : IBuilder where T : Task
     {
         private readonly object[] _args;
         
@@ -15,6 +15,6 @@ namespace BehaviourTree.Builders
             for (var i = 0; i < args.Length; i++) _args[i + 1] = args[i];
         }
 
-        public override Node Build() => (Node) Activator.CreateInstance(typeof(T), _args);
+        public Node Build() => (Node) Activator.CreateInstance(typeof(T), _args);
     }
 }
